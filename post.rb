@@ -21,27 +21,38 @@ class Post
 
     #loop over all the comments
     #store the parent_id and last id on each iteration
-    parent_id = 0
+    parents=[-1]
+    previous = 0
     last_id = 0
     comment_list = doc.css('tr.athing.comtr').each {|tr|
       #create a new comment
       c = Comment.new
       #get id
-      c.id,last_id = tr['id']
+      c.id = tr['id']
       #get authour
-      c.authour = tr.css('a.hnuser')map {|link| link.inner_text}
+      c.authour = tr.css('a.hnuser').map {|link| link.inner_text}
       #get days_ago
-      c.days_ago = tr.css('span.age > a')map {|link| link.inner_text}
+      c.days_ago = tr.css('span.age > a').map {|link| link.inner_text}
       #get text
       c.text = tr.css('span.comment').text
 
-      #create parent_id
+      #create parent_id in a stack
+      #store indent
+      current = tr.css('td.ind > img')[0]['width']
+      if current > previous
+        parents << last_id
+      elsif current < previous
+        ((current-previous)/40).times {parents.shift}
+      end
+      c.parent_id = parents.last
+      previous = current
+      last_id = c.id
 
       #add comment to the comment list
-      add_comment(c)
+      #add_comment(c)
 
     #print comments
-    comments
+    comments_list
   end
 
   #Post#add_comment takes a Comment object as its input and adds it to the comment list.
